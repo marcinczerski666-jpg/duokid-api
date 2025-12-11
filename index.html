@@ -82,6 +82,7 @@
 const chat = document.getElementById("chat");
 const eye = document.getElementById("eye");
 
+// Add message to chat
 function addMessage(who, text) {
     const p = document.createElement("div");
     p.className = who;
@@ -90,8 +91,43 @@ function addMessage(who, text) {
     chat.scrollTop = chat.scrollHeight;
 }
 
-// Initial welcome message
-addMessage("duo", "Hi! I'm DuoKid. Tap the eye and talk to me.");
+// Welcome message
+addMessage("duo", "Hi! I'm here. Tap the eye and talk to me.");
+
+
+// Text-to-Speech
+function speak(text) {
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = "en-US";
+    speechSynthesis.speak(msg);
+}
+
+
+// Send text to backend
+async function askDuokid(userText) {
+    addMessage("duo", "Thinking…");
+
+    try {
+        const res = await fetch("/api/duokid", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userText })
+        });
+
+        const data = await res.json();
+
+        if (data.reply) {
+            addMessage("duo", data.reply);
+            speak(data.reply);
+        } else {
+            addMessage("duo", "I cannot answer right now.");
+        }
+
+    } catch (err) {
+        addMessage("duo", "Connection error.");
+    }
+}
+
 
 // Speech Recognition
 let listening = false;
@@ -114,7 +150,7 @@ if ("webkitSpeechRecognition" in window) {
     };
 
     recognition.onerror = () => {
-        addMessage("duo", "Microphone error. Please check permissions.");
+        addMessage("duo", "Microphone error.");
         listening = false;
         eye.classList.remove("active");
     };
@@ -128,45 +164,12 @@ if ("webkitSpeechRecognition" in window) {
     addMessage("duo", "Your browser does not support voice input.");
 }
 
-// Text-to-Speech
-function speak(text) {
-    const msg = new SpeechSynthesisUtterance(text);
-    msg.lang = "en-US";
-    speechSynthesis.speak(msg);
-}
 
-// Send request to API route on Vercel
-async function askDuokid(userText) {
-    addMessage("duo", "Thinking…");
-
-    try {
-        const response = await fetch("/api/duokid", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userText })
-        });
-
-        const data = await response.json();
-        addMessage("duo", data.reply);
-        speak(data.reply);
-
-    } catch (err) {
-        addMessage("duo", "Connection error.");
-    }
-}
-
-// Eye click activates speech recognition
+// Eye tap → start/stop listening
 eye.addEventListener("click", () => {
-    if (!recognition) {
-        addMessage("duo", "Voice recognition not supported.");
-        return;
-    }
-
-    if (!listening) {
-        recognition.start();
-    } else {
-        recognition.stop();
-    }
+    if (!recognition) return;
+    if (!listening) recognition.start();
+    else recognition.stop();
 });
 </script>
 
