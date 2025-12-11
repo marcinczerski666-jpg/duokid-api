@@ -1,177 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DuoKid</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DuoKid</title>
 
-<style>
+  <style>
     body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: radial-gradient(circle at center, #001533, #000a1a);
-        color: white;
-        text-align: center;
+      margin: 0;
+      font-family: "Arial", sans-serif;
+      background: linear-gradient(to bottom, #d9ecff, #e8f3ff, #f2f8ff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
     }
 
-    .container {
-        margin: 40px auto;
-        max-width: 450px;
-        padding: 20px;
-        background: white;
-        color: black;
-        border-radius: 20px;
-        box-shadow: 0 0 40px rgba(120, 80, 255, 0.6);
+    .kid-image {
+      width: 220px;
+      height: 220px;
+      border-radius: 20px;
+      object-fit: cover;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      animation: pop 0.6s ease-out;
+      margin-top: 20px;
     }
 
-    #eye {
-        width: 160px;
-        height: 160px;
-        margin: 0 auto 20px;
-        border-radius: 50%;
-        background: radial-gradient(circle at 40% 40%, #ffffff, #a88bff, #6a40ff);
-        box-shadow: 0 0 40px rgba(140, 80, 255, 0.7);
-        cursor: pointer;
-        transition: 0.3s;
+    @keyframes pop {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
-    #eye.active {
-        box-shadow: 0 0 60px rgba(0, 255, 140, 1);
-        background: radial-gradient(circle at 40% 40%, #cfffde, #44ff9a, #00c46a);
+    h1 {
+      font-size: 42px;
+      font-weight: bold;
+      margin: 15px 0 5px 0;
+      color: #333;
     }
 
-    #name {
-        font-size: 28px;
-        font-weight: bold;
-        margin-bottom: 15px;
+    .chat-box {
+      width: 90%;
+      max-width: 700px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 25px;
+      padding: 25px;
+      margin-top: 20px;
+      min-height: 230px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      backdrop-filter: blur(8px);
+      font-size: 20px;
+      text-align: left;
+      overflow-y: auto;
     }
 
-    #chat {
-        background: #e9eefc;
-        padding: 15px;
-        border-radius: 15px;
-        height: 260px;
-        overflow-y: auto;
-        text-align: left;
-        font-size: 16px;
+    .button {
+      margin-top: 25px;
+      padding: 15px 35px;
+      font-size: 22px;
+      background: #6d83f2;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(109,131,242,0.4);
+      transition: 0.25s;
     }
 
-    .duo { color: #0047ff; margin-bottom: 10px; }
-    .you { color: #008a2e; margin-bottom: 10px; }
-
-    #hint {
-        margin-top: 20px;
-        font-size: 15px;
-        opacity: 0.8;
+    .button:hover {
+      background: #5b73e6;
+      transform: translateY(-2px);
     }
-</style>
+
+  </style>
 </head>
-
 <body>
 
-<div class="container">
-    <div id="eye"></div>
-    <div id="name">DUOKID</div>
+  <!-- Twoja grafika UNICORN KID -->
+  <img src="duokid.jpg" alt="DuoKid" class="kid-image">
 
-    <div id="chat"></div>
+  <h1>DuoKid</h1>
 
-    <div id="hint">Tap the eye and speak to DuoKid.</div>
-</div>
+  <div class="chat-box" id="chatBox">
+    Dotknij mnie i porozmawiaj ze mną.
+  </div>
 
-<script>
-const chat = document.getElementById("chat");
-const eye = document.getElementById("eye");
+  <button class="button" id="speakBtn">Porozmawiaj</button>
 
-// Add message to chat
-function addMessage(who, text) {
-    const p = document.createElement("div");
-    p.className = who;
-    p.textContent = (who === "duo" ? "Duokid: " : "You: ") + text;
-    chat.appendChild(p);
-    chat.scrollTop = chat.scrollHeight;
-}
+  <script>
+    const btn = document.getElementById("speakBtn");
+    const chatBox = document.getElementById("chatBox");
 
-// Welcome message
-addMessage("duo", "Hi! I'm here. Tap the eye and talk to me.");
-
-
-// Text-to-Speech
-function speak(text) {
-    const msg = new SpeechSynthesisUtterance(text);
-    msg.lang = "en-US";
-    speechSynthesis.speak(msg);
-}
-
-
-// Send text to backend
-async function askDuokid(userText) {
-    addMessage("duo", "Thinking…");
-
-    try {
-        const res = await fetch("/api/duokid", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userText })
-        });
-
-        const data = await res.json();
-
-        if (data.reply) {
-            addMessage("duo", data.reply);
-            speak(data.reply);
-        } else {
-            addMessage("duo", "I cannot answer right now.");
-        }
-
-    } catch (err) {
-        addMessage("duo", "Connection error.");
-    }
-}
-
-
-// Speech Recognition
-let listening = false;
-let recognition;
-
-if ("webkitSpeechRecognition" in window) {
-    recognition = new webkitSpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-        listening = true;
-        eye.classList.add("active");
-    };
-
-    recognition.onend = () => {
-        listening = false;
-        eye.classList.remove("active");
-    };
-
-    recognition.onerror = () => {
-        addMessage("duo", "Microphone error.");
-        listening = false;
-        eye.classList.remove("active");
-    };
-
-    recognition.onresult = async (event) => {
-        const text = event.results[0][0].transcript;
-        addMessage("you", text);
-        await askDuokid(text);
-    };
-} else {
-    addMessage("duo", "Your browser does not support voice input.");
-}
-
-
-// Eye tap → start/stop listening
-eye.addEventListener("click", () => {
-    if (!recognition) return;
-    if (!listening) recognition.start();
-    else recognition.stop();
-});
-</script>
+    btn.addEventListener("click", () => {
+      chatBox.innerHTML += "<br><br><b>DuoKid:</b> Myślę...";
+      
+      fetch("/api/duokid", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userText: "Cześć DuoKid!" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        chatBox.innerHTML += "<br><br><b>DuoKid:</b> " + (data.reply || "Brak odpowiedzi.");
+      })
+      .catch(() => {
+        chatBox.innerHTML += "<br><br><b>DuoKid:</b> Błąd serwera.";
+      });
+    });
+  </script>
 
 </body>
 </html>
